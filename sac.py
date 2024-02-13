@@ -7,7 +7,7 @@ from model import GaussianPolicy, QNetwork, DeterministicPolicy
 
 
 class SAC(object):
-    def __init__(self, num_inputs, action_space, args):
+    def __init__(self, num_inputs, action_spec, args):
 
         self.gamma = args.gamma
         self.tau = args.tau
@@ -19,26 +19,26 @@ class SAC(object):
 
         self.device = torch.device("cuda" if args.cuda else "cpu")
 
-        self.critic = QNetwork(num_inputs, action_space.shape[0], args.hidden_size).to(device=self.device)
+        self.critic = QNetwork(num_inputs, action_spec.continuous_size, args.hidden_size).to(device=self.device)
         self.critic_optim = Adam(self.critic.parameters(), lr=args.lr)
 
-        self.critic_target = QNetwork(num_inputs, action_space.shape[0], args.hidden_size).to(self.device)
+        self.critic_target = QNetwork(num_inputs, action_spec.continuous_size, args.hidden_size).to(self.device)
         hard_update(self.critic_target, self.critic)
 
         if self.policy_type == "Gaussian":
             # Target Entropy = −dim(A) (e.g. , -6 for HalfCheetah-v2) as given in the paper
             if self.automatic_entropy_tuning is True:
-                self.target_entropy = -torch.prod(torch.Tensor(action_space.shape).to(self.device)).item()
+                self.target_entropy = -torch.prod(torch.Tensor(action_spec.shape).to(self.device)).item()
                 self.log_alpha = torch.zeros(1, requires_grad=True, device=self.device)
                 self.alpha_optim = Adam([self.log_alpha], lr=args.lr)
 
-            self.policy = GaussianPolicy(num_inputs, action_space.shape[0], args.hidden_size, action_space).to(self.device)
+            self.policy = GaussianPolicy(num_inputs, action_spec.continuous_size, args.hidden_size, action_spec).to(self.device)
             self.policy_optim = Adam(self.policy.parameters(), lr=args.lr)
 
         else:
             self.alpha = 0
             self.automatic_entropy_tuning = False
-            self.policy = DeterministicPolicy(num_inputs, action_space.shape[0], args.hidden_size, action_space).to(self.device)
+            self.policy = DeterministicPolicy(num_inputs, action_spec.continuous_size, args.hidden_size, action_spec).to(self.device)
             self.policy_optim = Adam(self.policy.parameters(), lr=args.lr)
 
     def select_action(self, state, evaluate=False):
@@ -47,6 +47,7 @@ class SAC(object):
             action, _, _ = self.policy.sample(state)
         else:
             _, _, action = self.policy.sample(state)
+        action = action.unsqueeze(0)
         return action.detach().cpu().numpy()[0]
 
     def update_parameters(self, memory, batch_size, updates):

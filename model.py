@@ -1,3 +1,4 @@
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -48,6 +49,8 @@ class QNetwork(nn.Module):
         self.apply(weights_init_)
 
     def forward(self, state, action):
+        state = np.squeeze(state, axis=1)
+        action = np.squeeze(action, axis=1)
         xu = torch.cat([state, action], 1)
         
         x1 = F.relu(self.linear1(xu))
@@ -74,16 +77,11 @@ class GaussianPolicy(nn.Module):
         self.apply(weights_init_)
 
         # action rescaling
-        if action_space is None:
-            self.action_scale = torch.tensor(1.)
-            self.action_bias = torch.tensor(0.)
-        else:
-            self.action_scale = torch.FloatTensor(
-                (action_space.high - action_space.low) / 2.)
-            self.action_bias = torch.FloatTensor(
-                (action_space.high + action_space.low) / 2.)
+        self.action_scale = torch.tensor(1.)
+        self.action_bias = torch.tensor(0.)
 
     def forward(self, state):
+        state = np.squeeze(state, axis=1)
         x = F.relu(self.linear1(state))
         x = F.relu(self.linear2(x))
         mean = self.mean_linear(x)
@@ -123,16 +121,11 @@ class DeterministicPolicy(nn.Module):
         self.apply(weights_init_)
 
         # action rescaling
-        if action_space is None:
-            self.action_scale = 1.
-            self.action_bias = 0.
-        else:
-            self.action_scale = torch.FloatTensor(
-                (action_space.high - action_space.low) / 2.)
-            self.action_bias = torch.FloatTensor(
-                (action_space.high + action_space.low) / 2.)
+        self.action_scale = 1.
+        self.action_bias = 0.
 
     def forward(self, state):
+        # state = np.squeeze(state, axis=1)
         x = F.relu(self.linear1(state))
         x = F.relu(self.linear2(x))
         mean = torch.tanh(self.mean(x)) * self.action_scale + self.action_bias
