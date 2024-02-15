@@ -10,7 +10,7 @@ from mlagents_envs.side_channel.engine_configuration_channel import EngineConfig
 from arg_parser import args
 
 # envs
-file_name = "subway103"
+file_name = "taeho-car-6"
 env_path = f"./{file_name}"
 
 # #############################################################################
@@ -139,6 +139,7 @@ if __name__ == "__main__":
             print("Test Episodes: {}, Avg. Reward: {}".format(episodes, round(avg_reward[0], 2)))
             print("----------------------------------------")
             
+    agent.save_checkpoint(file_name, "1")
 
     env.close()
 
