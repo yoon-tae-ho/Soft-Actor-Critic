@@ -9,6 +9,8 @@ from model import GaussianPolicy, QNetwork, DeterministicPolicy
 class SAC(object):
     def __init__(self, num_inputs, action_spec, args):
 
+        self.training = True    # 필요에 의해 추가
+
         self.gamma = args.gamma
         self.tau = args.tau
         self.alpha = args.alpha
@@ -143,3 +145,18 @@ class SAC(object):
                 self.critic.train()
                 self.critic_target.train()
 
+    def eval(self): # 필요에 의해 추가
+        self.training = False
+        self.policy.eval()
+        self.critic.eval()
+        self.critic_target.eval()
+
+    def train(self, is_training=True):    # 필요에 의해 추가
+        if is_training:
+            self.policy.train()
+            self.critic.train()
+            self.critic_target.train()
+        else:
+            self.policy.eval()
+            self.critic.eval()
+            self.critic_target.eval()

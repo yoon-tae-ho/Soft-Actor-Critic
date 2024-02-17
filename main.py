@@ -16,7 +16,7 @@ env_path = f"./{file_name}"
 # #############################################################################
 # 임시
 train_mode = True
-max_episode_steps = 1000000
+max_episode_steps = 3000000
 
 def env_reset(env, behavior_name):
     env.reset()
@@ -58,6 +58,10 @@ if __name__ == "__main__":
     
     # Agent
     agent = SAC(spec.observation_specs[0].shape[0], spec.action_spec, args)
+    
+    # Load model
+    ckpt_path = "checkpoints/sac_checkpoint_{}_{}".format(file_name, "1")
+    # agent.load_checkpoint(ckpt_path)
     
     #Tesnorboard
     writer = SummaryWriter('runs/{}_SAC_{}_{}_{}'.format(datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S"), args.env_name, args.policy, "autotune" if args.automatic_entropy_tuning else ""))
